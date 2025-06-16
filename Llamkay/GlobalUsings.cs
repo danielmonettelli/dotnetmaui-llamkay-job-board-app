@@ -1,0 +1,12 @@
+﻿global using CommunityToolkit.Mvvm.ComponentModel;
+global using CommunityToolkit.Mvvm.Input;
+global using Llamkay.Constants;
+global using Llamkay.Models;
+global using Llamkay.Services;
+global using Llamkay.ViewModels;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Logging;
+global using System.Collections.ObjectModel;
+global using System.Text.Json;
+global using System.Text.Json.Serialization;
+global using System.Web;
