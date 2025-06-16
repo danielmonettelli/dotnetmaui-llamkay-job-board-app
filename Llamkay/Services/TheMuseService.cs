@@ -10,7 +10,9 @@ public class TheMuseService : ITheMuseService
     public TheMuseService(HttpClient httpClient, ILogger<TheMuseService> logger, IConfiguration configuration = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));        // Obtener API Key desde configuración o variables de entorno
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Get API Key from configuration or environment variables
         _apiKey = configuration?["TheMuseApiKey"] ??
                  Environment.GetEnvironmentVariable("THEMUSE_API_KEY") ??
                  TheMuseConstants.ApiKey;
@@ -24,24 +26,25 @@ public class TheMuseService : ITheMuseService
             _logger.LogInformation("The Muse API Key configured successfully");
         }
 
-        // Configurar HttpClient
+        // Configure HttpClient
         _httpClient.BaseAddress = new Uri(TheMuseConstants.BaseUrl);
         _httpClient.DefaultRequestHeaders.Add(TheMuseConstants.UserAgentHeader, TheMuseConstants.UserAgentValue);
         _httpClient.Timeout = TimeSpan.FromSeconds(TheMuseConstants.DefaultTimeout);
 
-        // Agregar API Key al header si está disponible
+        // Add API Key to header if available
         if (!string.IsNullOrWhiteSpace(_apiKey))
         {
             _httpClient.DefaultRequestHeaders.Add(TheMuseConstants.ApiKeyHeader, _apiKey);
         }
 
-        // Configurar opciones de JSON
+        // Configure JSON options
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
     }
+
     public async Task<TheMuseJobsResponse> GetJobsAsync(
         int? page = null,
         string? category = null,
@@ -66,7 +69,9 @@ public class TheMuseService : ITheMuseService
             _logger.LogInformation($"Requesting jobs: {requestUri}");
 
             var response = await _httpClient.GetAsync(requestUri);
-            response.EnsureSuccessStatusCode(); var jsonContent = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+
+            var jsonContent = await response.Content.ReadAsStringAsync();
             return DeserializeResponse<TheMuseJobsResponse>(jsonContent);
         }
         catch (HttpRequestException ex)
@@ -92,7 +97,9 @@ public class TheMuseService : ITheMuseService
             _logger.LogInformation($"Requesting job by ID: {requestUri}");
 
             var response = await _httpClient.GetAsync(requestUri);
-            response.EnsureSuccessStatusCode(); var jsonContent = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+
+            var jsonContent = await response.Content.ReadAsStringAsync();
             return DeserializeResponse<TheMuseJob>(jsonContent);
         }
         catch (HttpRequestException ex)
@@ -101,6 +108,7 @@ public class TheMuseService : ITheMuseService
             throw new Exception($"Error while fetching job by ID {jobId}", ex);
         }
     }
+
     public async Task<TheMuseCompaniesResponse> GetCompaniesAsync(
         int? page = null,
         string? location = null,
@@ -109,6 +117,18 @@ public class TheMuseService : ITheMuseService
     {
         try
         {
+            // Ensure that page is always at least 1
+            // The Muse API expects pagination to start at 1, not 0
+            if (page.HasValue && page.Value < 1)
+            {
+                page = 1;
+                _logger.LogWarning("The page parameter was adjusted to 1 because the API expects values >= 1");
+            }
+            else if (!page.HasValue)
+            {
+                page = 1; // Default value if not specified
+            }
+
             var queryParams = BuildQueryParameters(new Dictionary<string, object?>
                 {
                     { TheMuseConstants.PageParameter, page },
@@ -124,12 +144,43 @@ public class TheMuseService : ITheMuseService
             response.EnsureSuccessStatusCode();
 
             var jsonContent = await response.Content.ReadAsStringAsync();
-            return DeserializeResponse<TheMuseCompaniesResponse>(jsonContent);
+
+            // Save JSON for debugging
+            var previewLength = Math.Min(200, jsonContent.Length);
+            _logger.LogInformation($"API response preview: {jsonContent.Substring(0, previewLength)}...");
+
+            // Try to deserialize directly
+            try
+            {
+                var result = DeserializeResponse<TheMuseCompaniesResponse>(jsonContent);
+
+                // Validate the result
+                if (result != null && result.Results != null && result.Results.Count > 0)
+                {
+                    _logger.LogInformation($"Successful deserialization: {result.Results.Count} companies found");
+                    return result;
+                }
+                else
+                {
+                    _logger.LogWarning("Deserialization was successful but no companies were found");
+                    return new TheMuseCompaniesResponse { Results = new List<TheMuseCompany>() };
+                }
+            }
+            catch (Exception deserEx)
+            {
+                _logger.LogError(deserEx, "Error during response deserialization");
+                throw new Exception($"Error processing API response: {deserEx.Message}", deserEx);
+            }
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error while fetching companies from The Muse API");
-            throw new Exception("Connection error with The Muse API", ex);
+            _logger.LogError(ex, $"Error while fetching companies from The Muse API. Status: {ex.StatusCode}");
+            throw new Exception($"Connection error with The Muse API: {ex.Message} (Status: {ex.StatusCode})", ex);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "General error getting companies");
+            throw new Exception($"General error getting companies: {ex.Message}", ex);
         }
     }
 
@@ -155,6 +206,7 @@ public class TheMuseService : ITheMuseService
             throw new Exception($"Error while fetching company by ID {companyId}", ex);
         }
     }
+
     public async Task<TheMuseJobsResponse> GetJobsByCompanyAsync(
         string companyId,
         int? page = null,
@@ -166,6 +218,7 @@ public class TheMuseService : ITheMuseService
 
         return await GetJobsAsync(page, category, level, null, companyId);
     }
+
     public async Task<TheMuseJobsResponse> SearchJobsAsync(
         string keyword,
         int? page = null,
@@ -287,6 +340,7 @@ public class TheMuseService : ITheMuseService
             return false;
         }
     }
+
     private string BuildQueryParameters(Dictionary<string, object?> parameters)
     {
         var validParams = parameters
@@ -318,12 +372,40 @@ public class TheMuseService : ITheMuseService
 
         try
         {
-            var result = JsonSerializer.Deserialize<T>(jsonContent, _jsonOptions);
-            return result ?? new T();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                // Allow more flexible readings
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true,
+                // Ignore unknown properties to be more tolerant to API changes
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+            var result = JsonSerializer.Deserialize<T>(jsonContent, options);
+
+            if (result == null)
+            {
+                _logger.LogWarning($"Deserialization produced a NULL result for type {typeof(T).Name}");
+                return new T();
+            }
+
+            return result;
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Error deserializing JSON response");
+            // Log error details to facilitate debugging
+            _logger.LogError(ex, $"Error deserializing JSON response for type {typeof(T).Name}");
+            _logger.LogError($"Error path: {ex.Path}, Line: {ex.LineNumber}, Position: {ex.BytePositionInLine}");
+
+            // Show JSON fragment to help diagnose
+            if (!string.IsNullOrEmpty(jsonContent))
+            {
+                var previewLength = Math.Min(500, jsonContent.Length);
+                _logger.LogError($"JSON preview: {jsonContent.Substring(0, previewLength)}...");
+            }
+
             return new T();
         }
     }

@@ -14,8 +14,9 @@ public class TheMuseCompany
     [JsonPropertyName("description")]
     public string Description { get; set; }
 
+    // Changed from string to object to handle any type of value (object, array, or string)
     [JsonPropertyName("size")]
-    public string Size { get; set; }
+    public object Size { get; set; }
 
     [JsonPropertyName("model_type")]
     public string ModelType { get; set; }

@@ -3,7 +3,10 @@
     x:Class="Llamkay.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Llamkay - Job Board">
+    xmlns:model="clr-namespace:Llamkay.Models"
+    xmlns:vm="clr-namespace:Llamkay.ViewModels"
+    Title="Llamkay - Job Board"
+    x:DataType="vm:MainViewModel">
 
     <Grid>
         <ScrollView>
@@ -17,7 +20,7 @@
                     BackgroundColor="{StaticResource Primary}"
                     StrokeThickness="0">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="10"/>
+                        <RoundRectangle CornerRadius="10" />
                     </Border.StrokeShape>
                     <VerticalStackLayout Spacing="5">
                         <Label
@@ -25,12 +28,12 @@
                             FontSize="24"
                             HorizontalOptions="Center"
                             Text="🦙 Llamkay Job Board"
-                            TextColor="White"/>
+                            TextColor="White" />
                         <Label
                             FontSize="14"
                             HorizontalOptions="Center"
                             Text="Powered by The Muse API"
-                            TextColor="White"/>
+                            TextColor="White" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -41,39 +44,39 @@
                     Stroke="{StaticResource Gray200}"
                     StrokeThickness="1">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="8"/>
+                        <RoundRectangle CornerRadius="8" />
                     </Border.StrokeShape>
                     <VerticalStackLayout Spacing="10">
                         <Label
                             FontAttributes="Bold"
                             FontSize="18"
-                            Text="🔧 API Test"/>
+                            Text="🔧 API Test" />
                         <Button
                             BackgroundColor="{StaticResource Primary}"
                             Command="{Binding TestApiCommand}"
                             Text="Test API Connection"
-                            TextColor="White"/>
+                            TextColor="White" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!--  Search Section  -->
                 <Border
                     Padding="15"
-                    BackgroundColor="{StaticResource Secondary}"
+                    BackgroundColor="Red"
                     Stroke="{StaticResource Gray200}"
                     StrokeThickness="1">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="8"/>
+                        <RoundRectangle CornerRadius="8" />
                     </Border.StrokeShape>
                     <VerticalStackLayout Spacing="10">
                         <Label
                             FontAttributes="Bold"
                             FontSize="18"
-                            Text="🔍 Job Search"/>
+                            Text="🔍 Job Search" />
 
                         <Entry
                             Placeholder="Search keyword (e.g., developer, designer...)"
-                            Text="{Binding SearchKeyword}"/>
+                            Text="{Binding SearchKeyword}" />
 
                         <Grid
                             ColumnDefinitions="*,*"
@@ -82,12 +85,12 @@
                                 Title="Select Category"
                                 Grid.Column="0"
                                 ItemsSource="{Binding Categories}"
-                                SelectedItem="{Binding SelectedCategory}"/>
+                                SelectedItem="{Binding SelectedCategory}" />
                             <Picker
                                 Title="Select Location"
                                 Grid.Column="1"
                                 ItemsSource="{Binding Locations}"
-                                SelectedItem="{Binding SelectedLocation}"/>
+                                SelectedItem="{Binding SelectedLocation}" />
                         </Grid>
 
                         <Grid
@@ -98,19 +101,19 @@
                                 BackgroundColor="{StaticResource Success}"
                                 Command="{Binding SearchJobsCommand}"
                                 Text="Search Jobs"
-                                TextColor="White"/>
+                                TextColor="White" />
                             <Button
                                 Grid.Column="1"
                                 BackgroundColor="{StaticResource Info}"
                                 Command="{Binding LoadCompaniesCommand}"
                                 Text="Load Companies"
-                                TextColor="White"/>
+                                TextColor="White" />
                             <Button
                                 Grid.Column="2"
                                 BackgroundColor="{StaticResource Warning}"
                                 Command="{Binding ClearResultsCommand}"
                                 Text="Clear"
-                                TextColor="White"/>
+                                TextColor="White" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -122,12 +125,12 @@
                     Stroke="{StaticResource Gray200}"
                     StrokeThickness="1">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="5"/>
+                        <RoundRectangle CornerRadius="5" />
                     </Border.StrokeShape>
                     <Label
                         FontSize="14"
                         HorizontalOptions="Center"
-                        Text="{Binding StatusMessage}"/>
+                        Text="{Binding StatusMessage}" />
                 </Border>
                 <!--  Jobs Results  -->
                 <StackLayout
@@ -135,47 +138,48 @@
                     BackgroundColor="Pink"
                     IsVisible="True">
 
-                    <StackLayout Orientation="Horizontal"
-                            Spacing="10">
+                    <StackLayout
+                        Orientation="Horizontal"
+                        Spacing="10">
                         <Label
                             FontAttributes="Bold"
                             FontSize="18"
                             Text="💼 Job Results"
-                            VerticalOptions="Center"/>
+                            VerticalOptions="Center" />
                         <Label
                             FontSize="14"
                             Text="{Binding Jobs.Count, StringFormat='({0} jobs found)'}"
                             TextColor="Red"
-                            VerticalOptions="Center"/>
+                            VerticalOptions="Center" />
                     </StackLayout>
 
                     <Label
                         FontSize="14"
                         Text="{Binding HasJobs, StringFormat='HasJobs: {0}'}"
-                        TextColor="Blue"/>
+                        TextColor="Blue" />
                     <CollectionView
-                        ItemsSource="{Binding Jobs}"
+                        BackgroundColor="Blue"
                         HeightRequest="400"
-                        BackgroundColor="LightGray">
+                        ItemsSource="{Binding Jobs}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="model:TheMuseJob">
                                 <StackLayout
+                                    Margin="5"
                                     Padding="10"
-                                    BackgroundColor="White"
-                                    Margin="5">
+                                    BackgroundColor="White">
                                     <Label
+                                        BackgroundColor="Yellow"
                                         FontAttributes="Bold"
                                         FontSize="16"
-                                        Text="{Binding Name}"
-                                        BackgroundColor="Yellow"/>
+                                        Text="{Binding Name}" />
                                     <Label
+                                        BackgroundColor="LightBlue"
                                         FontSize="14"
-                                        Text="{Binding Company.Name}"
-                                        BackgroundColor="LightBlue"/>
+                                        Text="{Binding Company.Name}" />
                                     <Label
+                                        BackgroundColor="LightGreen"
                                         FontSize="12"
-                                        Text="{Binding Type}"
-                                        BackgroundColor="LightGreen"/>
+                                        Text="{Binding Type}" />
                                 </StackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -185,56 +189,56 @@
                 <!--  Companies Results  -->
                 <Border
                     Padding="15"
-                    BackgroundColor="{StaticResource Secondary}"
-                    IsVisible="{Binding HasCompanies}"
+                    IsVisible="True"
                     Stroke="{StaticResource Gray200}"
                     StrokeThickness="1">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="8"/>
+                        <RoundRectangle CornerRadius="8" />
                     </Border.StrokeShape>
                     <VerticalStackLayout Spacing="10">
-                        <StackLayout Orientation="Horizontal"
-                                Spacing="10">
+                        <StackLayout
+                            Orientation="Horizontal"
+                            Spacing="10">
                             <Label
                                 FontAttributes="Bold"
                                 FontSize="18"
                                 Text="🏢 Company Results"
-                                VerticalOptions="Center"/>
+                                VerticalOptions="Center" />
                             <Label
                                 FontSize="14"
                                 Text="{Binding Companies.Count, StringFormat='({0} companies found)'}"
                                 TextColor="{StaticResource Primary}"
-                                VerticalOptions="Center"/>
+                                VerticalOptions="Center" />
                         </StackLayout>
                         <CollectionView
+                            BackgroundColor="Blue"
+                            HeightRequest="400"
                             ItemsSource="{Binding Companies}"
-                            MaximumHeightRequest="400"
-                            BackgroundColor="Transparent"
                             SelectionMode="None">
                             <CollectionView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="model:TheMuseCompany">
                                     <Border
-                                        Padding="15"
                                         Margin="5"
+                                        Padding="15"
                                         BackgroundColor="White"
                                         Stroke="{StaticResource Gray300}"
                                         StrokeThickness="1">
                                         <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="8"/>
+                                            <RoundRectangle CornerRadius="8" />
                                         </Border.StrokeShape>
                                         <StackLayout Spacing="8">
                                             <Label
                                                 FontAttributes="Bold"
                                                 FontSize="16"
+                                                LineBreakMode="WordWrap"
                                                 Text="{Binding Name}"
-                                                TextColor="Black"
-                                                LineBreakMode="WordWrap"/>
+                                                TextColor="Black" />
                                             <Label
                                                 FontSize="12"
-                                                Text="{Binding ShortDescription}"
-                                                TextColor="{StaticResource Gray600}"
                                                 LineBreakMode="WordWrap"
-                                                MaxLines="3"/>
+                                                MaxLines="3"
+                                                Text="{Binding Description}"
+                                                TextColor="{StaticResource Gray600}" />
                                         </StackLayout>
                                     </Border>
                                 </DataTemplate>
@@ -257,7 +261,7 @@
                 VerticalOptions="Center"
                 WidthRequest="200">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="10"/>
+                    <RoundRectangle CornerRadius="10" />
                 </Border.StrokeShape>
                 <VerticalStackLayout
                     HorizontalOptions="Center"
@@ -265,10 +269,10 @@
                     VerticalOptions="Center">
                     <ActivityIndicator
                         IsRunning="True"
-                        Color="{StaticResource Primary}"/>
+                        Color="{StaticResource Primary}" />
                     <Label
                         HorizontalOptions="Center"
-                        Text="Loading..."/>
+                        Text="Loading..." />
                 </VerticalStackLayout>
             </Border>
         </Grid>
